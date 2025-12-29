@@ -1,65 +1,211 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import FanCardPile from "./components/FanCardPile";
+import ResultCard from "./components/ResultCard";
+import { TAROT_CARDS, type TarotCard } from "./data/tarotCards";
+import { randInt } from "./lib/random";
+import {
+  getTaiwanDateString,
+  isVipDevice,
+  loadTodayPick,
+  saveTodayPick,
+} from "./lib/tarotStorage";
+
+const MAX_DAILY_PICKS = 3;
+
+const BACK_IMAGE = "/cards/back.png";
+const getFrontImagePath = (cardId: number) =>
+  `/cards/${String(cardId).padStart(2, "0")}.png`;
+
+const FLY_MS = 1800; // 飛行+多圈旋轉（久一點）
+const REVEAL_HOLD_MS = 900; // 背景/掃描線停留
+
+type Phase = "idle" | "flying" | "revealed";
 
 export default function Home() {
+  const [phase, setPhase] = useState<Phase>("idle");
+
+  const [picked, setPicked] = useState<TarotCard | null>(null);
+  const [pickedFront, setPickedFront] = useState<string>("");
+
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
+
+  const [count, setCount] = useState(0);
+  const [isVip, setIsVip] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+
+  const remaining = useMemo(() => Math.max(0, MAX_DAILY_PICKS - count), [count]);
+  const canPick = isVip || !isLocked;
+
+  useEffect(() => {
+    const vip = isVipDevice();
+    setIsVip(vip);
+
+    const today = getTaiwanDateString();
+    const stored = loadTodayPick();
+
+    if (stored && stored.date === today) {
+      setCount(stored.count);
+      if (!vip && stored.count >= MAX_DAILY_PICKS) setIsLocked(true);
+      else setIsLocked(false);
+    } else {
+      setCount(0);
+      setIsLocked(false);
+    }
+  }, []);
+
+  const onPick = (slotIndex: number) => {
+    if (!canPick) return;
+    if (phase !== "idle") return;
+
+    setActiveSlot(slotIndex);
+    setPhase("flying");
+
+    // 先決定抽哪張（避免飛行途中跳格）
+    const card = TAROT_CARDS[randInt(0, TAROT_CARDS.length - 1)];
+    const front = getFrontImagePath(card.id);
+
+    window.setTimeout(() => {
+      // 更新次數（VIP 不鎖）
+      const today = getTaiwanDateString();
+      const stored = loadTodayPick();
+
+      let nextCount = 1;
+      if (stored && stored.date === today) nextCount = stored.count + 1;
+
+      saveTodayPick({ date: today, count: nextCount, lastCardId: card.id });
+
+      setCount(nextCount);
+      if (!isVip && nextCount >= MAX_DAILY_PICKS) setIsLocked(true);
+
+      // 顯示結果（此時牌堆不再顯示）
+      setPicked(card);
+      setPickedFront(front);
+      setPhase("revealed");
+
+      window.setTimeout(() => {
+        // 停在 revealed，等使用者按「再次抽牌」
+      }, REVEAL_HOLD_MS);
+    }, FLY_MS);
+  };
+
+  const onAgain = () => {
+    setPicked(null);
+    setPickedFront("");
+    setActiveSlot(null);
+    setPhase("idle");
+  };
+
+  const onEnableVipTest = () => {
+    setIsVip(true);
+    setIsLocked(false);
+  };
+
+  const onResetTest = () => {
+    setCount(0);
+    setIsLocked(false);
+    setPicked(null);
+    setPickedFront("");
+    setActiveSlot(null);
+    setPhase("idle");
+    // 若你想清掉 localStorage，就打開這行
+    // localStorage.removeItem("tarot_today_pick");
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main
+      className={[
+        "page",
+        phase === "flying" ? "bgFlash" : "",
+        phase === "revealed" ? "bgGlow" : "",
+      ].join(" ")}
+    >
+      <div className="wrap">
+        <header className="header">
+          <h1 className="h1">每日限抽 {MAX_DAILY_PICKS} 張塔羅</h1>
+          <p className="sub">
+            抽一張牌，看看今天的節奏與提醒。這不是預言，是給你一個溫柔的行動方向。
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        </header>
+
+        <section className="panel">
+          <div className="statusLine">
+            {isVip ? (
+              <span className="vip">VIP 測試模式：不限次數抽牌</span>
+            ) : isLocked ? (
+              <span className="locked">今日已達抽牌上限，明天再來 🌙</span>
+            ) : (
+              <span className="remain">今天還可以再抽 {remaining} 次</span>
+            )}
+          </div>
+
+          {/* ✅ 測試用按鈕（避免你被 VIP/鎖卡住） */}
+          <div className="testBtns">
+            {!isVip && (
+              <button className="ghostBtn" type="button" onClick={onEnableVipTest}>
+                開啟 VIP（測試解鎖）
+              </button>
+            )}
+            <button className="ghostBtn" type="button" onClick={onResetTest}>
+              重置（測試用）
+            </button>
+          </div>
+
+          {/* ✅ 抽完：只留結果，不顯示 22 張 */}
+          {picked ? (
+            <ResultCard
+              picked={picked}
+              frontImage={pickedFront}
+              isVip={isVip}
+              count={count}
+              remaining={remaining}
+              onAgain={onAgain}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          ) : (
+            <div className="pileArea">
+              <FanCardPile
+                phase={phase}
+                disabled={!canPick}
+                backImage={BACK_IMAGE}
+                onPick={onPick}
+                activeSlot={activeSlot}
+              />
+
+              {/* ✅ 飛行中那張：固定在最上層，不會被 22 張壓住 */}
+              {activeSlot !== null && phase === "flying" && (
+                <div className="flyingOverlay" aria-hidden>
+                  <div className="flyCard perspective">
+                    <div className="flyInner preserve3d flyAnim">
+                      {/* 背面 */}
+                      <div className="flyFace back backfaceHidden">
+                        <img className="flyImg" src={BACK_IMAGE} alt="back" draggable={false} />
+                        <div className="scan scanActive" />
+                      </div>
+
+                      {/* 正面（飛行時先用背面假裝；到 revealed 才切到真正正面在 ResultCard 顯示） */}
+                      <div className="flyFace front backfaceHidden rotateY180">
+                        <img className="flyImg" src={BACK_IMAGE} alt="front" draggable={false} />
+                        <div className="scan scanActive" />
+                        <div className="burst90" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 粒子（很輕量，不會卡） */}
+                  <div className="sparkLayer">
+                    {Array.from({ length: 16 }).map((_, i) => (
+                      <span key={i} className="spark" style={{ ["--i" as any]: i }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <footer className="footer">Tarot MVP · Next.js</footer>
+        </section>
+      </div>
+    </main>
   );
 }
