@@ -97,21 +97,28 @@ export default function Home() {
     setPhase("idle");
   };
 
-  const onEnableVipTest = () => {
-    setIsVip(true);
-    setIsLocked(false);
+  const onToggleVipTest = () => {
+    setIsVip((prev) => {
+      const next = !prev;
+  
+      // 開 VIP：直接解鎖
+      if (next) {
+        setIsLocked(false);
+        return next;
+      }
+  
+      // 關 VIP：回到一般規則（若今天已抽滿就鎖）
+      const today = getTaiwanDateString();
+      const stored = loadTodayPick();
+      const todayCount = stored && stored.date === today ? stored.count : 0;
+      setIsLocked(todayCount >= MAX_DAILY_PICKS);
+  
+      return next;
+    });
   };
+  
 
-  const onResetTest = () => {
-    setCount(0);
-    setIsLocked(false);
-    setPicked(null);
-    setPickedFront("");
-    setActiveSlot(null);
-    setPhase("idle");
-    // 若你想清掉 localStorage，就打開這行
-    // localStorage.removeItem("tarot_today_pick");
-  };
+ 
 
   return (
     <main
@@ -140,17 +147,12 @@ export default function Home() {
             )}
           </div>
 
-          {/* ✅ 測試用按鈕（避免你被 VIP/鎖卡住） */}
           <div className="testBtns">
-            {!isVip && (
-              <button className="ghostBtn" type="button" onClick={onEnableVipTest}>
-                開啟 VIP（測試解鎖）
-              </button>
-            )}
-            <button className="ghostBtn" type="button" onClick={onResetTest}>
-              重置（測試用）
+            <button className="ghostBtn" type="button" onClick={onToggleVipTest}>
+              {isVip ? "關閉 VIP（回一般模式）" : "開啟 VIP（測試解鎖）"}
             </button>
           </div>
+
 
           {/* ✅ 抽完：只留結果，不顯示 22 張 */}
           {picked ? (
