@@ -93,12 +93,12 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 
 /* ✅ 這裡是黑色容器：特效要鎖在裡面 */
 .pileArea {
-  position: relative; /* ✅ 讓 overlay 的 absolute 以它為基準 */
+  position: relative;
   border-radius: 18px;
   border: 1px solid var(--line);
   background: rgba(0,0,0,0.22);
   padding: 14px;
-  overflow: hidden; /* ✅ 把所有特效裁切在容器內 */
+  overflow: hidden;
 }
 
 /* ---------- Fan pile ---------- */
@@ -124,7 +124,6 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
   text-align: center;
 }
 
-/* flying/revealed 時淡出 */
 .pileFadeOut {
   opacity: 0;
   transform: translateY(6px);
@@ -177,13 +176,13 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 
 /* ---------- Flying overlay (鎖在 pileArea 裡) ---------- */
 .flyingOverlay {
-  position: absolute;  /* ✅ 改成 absolute */
-  inset: 0;            /* ✅ 填滿 pileArea */
-  z-index: 50;         /* ✅ 壓在牌堆上面 */
+  position: absolute;
+  inset: 0;
+  z-index: 50;
   pointer-events: none;
   display: grid;
   place-items: center;
-  overflow: hidden;    /* ✅ 保險：粒子也裁切 */
+  overflow: hidden;
 }
 
 .perspective { perspective: 1100px; }
@@ -268,7 +267,6 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
   100%    { opacity: 0; transform: scale(1.25); }
 }
 
-/* 微弧線 + 前快後慢 + 多圈旋轉 + 翻面 */
 .flyAnim {
   will-change: transform;
   animation: flyArc 1800ms cubic-bezier(.10,.85,.15,1) both;
@@ -380,6 +378,9 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
   position: relative;
   display: grid;
   place-items: center;
+
+  /* ✅ 關鍵：避免 blend/composite 讓圖片整張變暗 */
+  isolation: isolate;
 }
 
 .resultImg {
@@ -389,23 +390,42 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
   display: block;
   user-select: none;
   -webkit-user-drag: none;
+
+  /* ✅ 讓圖片永遠在最底層，特效在上面但不壓暗 */
+  position: relative;
+  z-index: 1;
 }
 
 .resultScan {
   position: absolute;
   inset: -10%;
-  background: linear-gradient(120deg, transparent 45%, rgba(255,255,255,0.55) 50%, transparent 55%);
-  opacity: 0.55;
+  background: linear-gradient(
+    120deg,
+    transparent 45%,
+    rgba(255,255,255,0.55) 50%,
+    transparent 55%
+  );
+
+  /* ✅ 不要用純 opacity 壓住整張：改 screen + 降低透明度 */
+  opacity: 0.28;
+  mix-blend-mode: screen;
+
   animation: scanSweep 900ms ease-in-out infinite;
   pointer-events: none;
+  z-index: 2;
 }
 
 .resultGlow {
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at 50% 45%, rgba(255,255,255,0.18), transparent 60%);
+
+  /* ✅ 一樣用 screen，避免變暗 */
+  opacity: 0.55;
   mix-blend-mode: screen;
+
   pointer-events: none;
+  z-index: 2;
 }
 
 .resultText {
@@ -464,7 +484,6 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
    ✅ RWD（新增）— 不動你現有特效/樣式，只補手機適配
    ========================================================= */
 
-/* 小螢幕：整體更緊凑 + 標題/描述置中 */
 @media (max-width: 520px) {
   .page { padding: 14px; }
   .wrap { gap: 12px; }
@@ -482,13 +501,11 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 
   .pileArea { padding: 10px; border-radius: 16px; }
 
-  /* 飛牌在手機縮小：看起來比較不會壓迫 */
   .flyCard { width: 170px; height: 260px; }
 
   .pileHint { font-size: 11px; }
 }
 
-/* Result：手機直向已經有，這邊把圖再縮一點、文字更好讀 */
 @media (max-width: 860px) {
   .resultImgBox {
     max-width: 280px;
@@ -501,7 +518,6 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
   .primaryBtn { width: min(420px, 92vw); }
 }
 
-/* 更小手機：避免結果畫面第一屏只看到圖 */
 @media (max-width: 380px) {
   .resultImgBox { max-width: 250px; height: 320px; }
   .resultTitle { font-size: 20px; }
