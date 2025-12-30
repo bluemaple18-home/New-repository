@@ -178,7 +178,7 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 .flyingOverlay {
   position: absolute;
   inset: 0;
-  z-index: 50;
+  z-index: 999; /* ✅ 提高：一定壓過牌堆 */
   pointer-events: none;
   display: grid;
   place-items: center;
@@ -275,7 +275,7 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 @keyframes flyArc {
   0% {
     transform:
-      translate3d(0, 260px, 0)
+      translate3d(0, 140px, 0)   /* ✅ 原本 260 → 140（桌機也不會被裁掉） */
       rotateZ(-18deg)
       rotateY(0deg)
       rotateX(12deg)
@@ -283,7 +283,7 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
   }
   40% {
     transform:
-      translate3d(0, -20px, 0)
+      translate3d(0, -12px, 0)
       rotateZ(22deg)
       rotateY(540deg)
       rotateX(6deg)
@@ -291,7 +291,7 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
   }
   55% {
     transform:
-      translate3d(0, -70px, 0)
+      translate3d(0, -42px, 0)
       rotateZ(10deg)
       rotateY(900deg)
       rotateX(2deg)
@@ -305,6 +305,7 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
       rotateX(0deg)
       rotateZ(1080deg);
   }
+
 }
 
 /* 粒子（輕量） */
@@ -522,4 +523,43 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
   .resultImgBox { max-width: 250px; height: 320px; }
   .resultTitle { font-size: 20px; }
   .resultSummary, .resultMeaning, .resultAdvice { font-size: 13px; }
+}
+/* =========================================================
+   ✅ 修正：手機 / 小容器下飛牌起手式被 overflow:hidden 裁掉
+   ========================================================= */
+
+/* 手機用較短的飛行位移，避免整張牌在 0% 被裁到看不到 */
+@keyframes flyArcMobile {
+  0% {
+    transform:
+      translate3d(0, 140px, 0)
+      rotateZ(-18deg)
+      rotateY(0deg)
+      rotateX(12deg)
+      rotateZ(0deg);
+  }
+  40% {
+    transform:
+      translate3d(0, -12px, 0)
+      rotateZ(22deg)
+      rotateY(540deg)
+      rotateX(6deg)
+      rotateZ(360deg);
+  }
+  55% {
+    transform:
+      translate3d(0, -42px, 0)
+      rotateZ(10deg)
+      rotateY(900deg)
+      rotateX(2deg)
+      rotateZ(720deg);
+  }
+  100% {
+    transform:
+      translate3d(0, 0px, 0)
+      rotateZ(0deg)
+      rotateY(1440deg)
+      rotateX(0deg)
+      rotateZ(1080deg);
+  }
 }
