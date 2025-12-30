@@ -33,17 +33,17 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 }
 
 .page.bgFlash::before { opacity: 1; animation: flashPulse 900ms ease-in-out both; }
-.page.bgGlow::before { opacity: 1; animation: glowHold 1600ms ease-in-out both; }
+.page.bgGlow::before  { opacity: 1; animation: glowHold 1600ms ease-in-out both; }
 
 @keyframes flashPulse {
-  0% { filter: brightness(0.65); opacity: 0.15; }
-  40% { filter: brightness(1.25); opacity: 0.95; }
+  0%   { filter: brightness(0.65); opacity: 0.15; }
+  40%  { filter: brightness(1.25); opacity: 0.95; }
   100% { filter: brightness(1.05); opacity: 0.55; }
 }
 
 @keyframes glowHold {
-  0% { filter: brightness(0.85); opacity: 0.35; }
-  35% { filter: brightness(1.25); opacity: 0.95; }
+  0%   { filter: brightness(0.85); opacity: 0.35; }
+  35%  { filter: brightness(1.25); opacity: 0.95; }
   100% { filter: brightness(1.10); opacity: 0.70; }
 }
 
@@ -71,7 +71,7 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 }
 
 .statusLine { font-size: 12px; color: var(--muted); }
-.vip { color: rgba(255,255,255,0.9); }
+.vip    { color: rgba(255,255,255,0.9); }
 .locked { color: rgba(255,200,200,0.9); }
 .remain { color: rgba(220,240,255,0.9); }
 
@@ -125,8 +125,17 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 }
 
 /* flying/revealed 時淡出 */
-.pileFadeOut { opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity 260ms ease, transform 260ms ease; }
-.pileFadeIn { opacity: 1; transform: translateY(0); transition: opacity 260ms ease, transform 260ms ease; }
+.pileFadeOut {
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+.pileFadeIn {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 260ms ease, transform 260ms ease;
+}
 
 .slotBtn {
   position: absolute;
@@ -234,9 +243,9 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 }
 
 @keyframes scanSweep {
-  0% { transform: translateX(-30%) translateY(0); opacity: 0; }
-  20% { opacity: 0.75; }
-  60% { opacity: 0.55; }
+  0%   { transform: translateX(-30%) translateY(0); opacity: 0; }
+  20%  { opacity: 0.75; }
+  60%  { opacity: 0.55; }
   100% { transform: translateX(30%) translateY(0); opacity: 0; }
 }
 
@@ -254,9 +263,9 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 
 @keyframes burstAt90 {
   0%, 44% { opacity: 0; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.06); }
-  62% { opacity: 0.15; transform: scale(1.25); }
-  100% { opacity: 0; transform: scale(1.25); }
+  50%     { opacity: 1; transform: scale(1.06); }
+  62%     { opacity: 0.15; transform: scale(1.25); }
+  100%    { opacity: 0; transform: scale(1.25); }
 }
 
 /* 微弧線 + 前快後慢 + 多圈旋轉 + 翻面 */
@@ -323,8 +332,8 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
 }
 
 @keyframes sparkFloat {
-  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.6); }
-  25% { opacity: 0.8; }
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) scale(0.6); }
+  25%  { opacity: 0.8; }
   100% {
     opacity: 0;
     transform:
@@ -449,4 +458,52 @@ html, body { padding: 0; margin: 0; background: var(--bg); color: #fff; }
   color: rgba(255,255,255,0.45);
   text-align: center;
   padding-top: 6px;
+}
+
+/* =========================================================
+   ✅ RWD（新增）— 不動你現有特效/樣式，只補手機適配
+   ========================================================= */
+
+/* 小螢幕：整體更緊凑 + 標題/描述置中 */
+@media (max-width: 520px) {
+  .page { padding: 14px; }
+  .wrap { gap: 12px; }
+
+  .header { align-items: center; }
+  .h1 { font-size: 24px; text-align: center; }
+  .sub { font-size: 13px; text-align: center; }
+
+  .panel { padding: 12px; border-radius: 16px; gap: 12px; }
+
+  .statusLine { text-align: center; }
+
+  .testBtns { gap: 8px; }
+  .ghostBtn { width: 100%; max-width: 320px; }
+
+  .pileArea { padding: 10px; border-radius: 16px; }
+
+  /* 飛牌在手機縮小：看起來比較不會壓迫 */
+  .flyCard { width: 170px; height: 260px; }
+
+  .pileHint { font-size: 11px; }
+}
+
+/* Result：手機直向已經有，這邊把圖再縮一點、文字更好讀 */
+@media (max-width: 860px) {
+  .resultImgBox {
+    max-width: 280px;
+    height: 360px;
+  }
+
+  .resultImg { width: 90%; height: 90%; }
+
+  .resultMeaning { max-width: 520px; }
+  .primaryBtn { width: min(420px, 92vw); }
+}
+
+/* 更小手機：避免結果畫面第一屏只看到圖 */
+@media (max-width: 380px) {
+  .resultImgBox { max-width: 250px; height: 320px; }
+  .resultTitle { font-size: 20px; }
+  .resultSummary, .resultMeaning, .resultAdvice { font-size: 13px; }
 }
